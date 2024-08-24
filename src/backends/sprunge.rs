@@ -1,6 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
-use reqwest::blocking::{Client, multipart::Form};
+use reqwest::blocking::{multipart::Form, Client};
 
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
