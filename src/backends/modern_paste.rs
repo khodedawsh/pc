@@ -1,7 +1,7 @@
 use std::fmt::{self, Display, Formatter};
 use std::time::{Duration, SystemTime};
 
-use reqwest::Client;
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use url::Url;
@@ -118,8 +118,8 @@ impl PasteClient for Backend {
 
         match data.url {
             None => Err("no url returned in response".to_owned().into()),
-            Some(ref url) => {
-                let url = Url::parse(url)?;
+            Some(url) => {
+                let url = Url::parse(url.as_str())?;
                 Ok(url)
             }
         }

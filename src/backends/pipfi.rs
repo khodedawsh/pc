@@ -1,7 +1,7 @@
 use std::fmt::{self, Display, Formatter};
 
-use reqwest::multipart::Form;
-use reqwest::Client;
+// use reqwest::multipart::Form;
+use reqwest::blocking::{Client, multipart::Form};
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use url::Url;
@@ -49,7 +49,7 @@ impl PasteClient for Backend {
     fn paste(&self, data: String) -> PasteResult<Url> {
         let form = Form::new().text("paste", data);
         let text = Client::new()
-            .post(self.url.clone())
+            .post::<reqwest::Url>(reqwest::Url::from(self.url.clone()))
             .multipart(form)
             .send()?
             .text()?;

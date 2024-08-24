@@ -1,8 +1,8 @@
 use std::fmt::{self, Display, Formatter};
 use std::time::Duration;
 
-use reqwest::multipart::Form;
-use reqwest::Client;
+use reqwest::blocking::{Client, multipart::Form};
+
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use url::Url;

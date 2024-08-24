@@ -2,7 +2,7 @@
 # found.
 
 [main]
-server = "vpaste"
+server = "termbin"
 
 [servers.vpaste]
 backend = "vpaste"
