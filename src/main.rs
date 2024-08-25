@@ -1,6 +1,7 @@
 use std::error::Error;
+use std::ffi::OsString;
 
-use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
+use clap::{arg, crate_authors, crate_version, Arg, Command};
 
 mod backends;
 mod config;
@@ -67,7 +68,7 @@ To use this, add a server block under the heading [servers.{0}] in the config to
     let mut backend = backend_config.clone().extract_backend();
 
     if let Err(e) = backend.apply_args(server_args) {
-        if let clap::ErrorKind::HelpDisplayed = e.kind {
+        if let clap::error::ErrorKind::DisplayHelp = e.kind() {
             eprintln!(
                 "[servers.{}]\n{}---\n",
                 server_choice,
@@ -97,54 +98,49 @@ To use this, add a server block under the heading [servers.{0}] in the config to
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let app = App::new("pc")
+    let app = Command::new("pc")
+        .allow_external_subcommands(true)
         .version(crate_version!())
         .author(crate_authors!())
-        .setting(AppSettings::AllowExternalSubcommands)
         .arg(
-            Arg::with_name("config")
-                .short("c")
+            Arg::new("config")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
-                .help("Set a custom config file. \"NONE\" forces use of default")
-                .takes_value(true),
+                .help("Set a custom config file. \"NONE\" forces use of default"),
         )
         .arg(
-            Arg::with_name("histfile")
-                .short("H")
+            Arg::new("histfile")
+                .short('H')
                 .long("histfile")
                 .value_name("FILE")
-                .help("Set a custom file to log to. \"NONE\" disables")
-                .takes_value(true),
+                .help("Set a custom file to log to. \"NONE\" disables"),
         )
-        .subcommand(SubCommand::with_name("list").about("Print info about available server blocks"))
-        .subcommand(SubCommand::with_name("list-backends").about("Print available backends"))
+        .subcommand(Command::new("list").about("Print info about available server blocks"))
+        .subcommand(Command::new("list-backends").about("Print available backends"))
+        .subcommand(Command::new("dump-config").about("Print current config serialized as toml"))
         .subcommand(
-            SubCommand::with_name("dump-config").about("Print current config serialized as toml"),
-        )
-        .subcommand(
-            SubCommand::with_name("show-backend")
-                .arg(Arg::with_name("backend"))
+            Command::new("show-backend")
+                .arg(arg!([backend]))
                 .about("Show information about a backend"),
         );
 
     let matches = app.get_matches();
 
     let op: Op = match matches.subcommand() {
-        ("list", _m) => Op::List,
-        ("dump-config", _m) => Op::DumpConfig,
-        ("list-backends", _m) => Op::ListBackends,
-        ("show-backend", Some(m)) => {
-            Op::ShowBackend(m.value_of("backend").expect("required param").to_owned())
-        }
-        (external, Some(ext_m)) => {
-            if matches.is_present("op") {
-                return Err("Extra commands can't be used when in paste mode"
-                    .to_owned()
-                    .into());
-            }
-            let ext_args: Vec<String> = match ext_m.values_of("") {
-                Some(values) => values.map(|s| s.to_owned()).collect(),
+        Some(("list", _m)) => Op::List,
+        Some(("dump-config", _m)) => Op::DumpConfig,
+        Some(("list-backends", _m)) => Op::ListBackends,
+        Some(("show-backend", m)) => Op::ShowBackend(
+            m.get_one::<String>("backend")
+                .expect("required param")
+                .to_owned(),
+        ),
+        Some((external, ext_m)) => {
+            let ext_args: Vec<String> = match ext_m.get_many::<OsString>("") {
+                Some(values) => values
+                    .map(|s| s.clone().into_string().expect("invalid encoding"))
+                    .collect(),
                 None => vec![],
             };
 
@@ -153,16 +149,15 @@ fn run() -> Result<(), Box<dyn Error>> {
                 server_args: ext_args,
             }
         }
-        ("", None) => Op::Paste {
+        None => Op::Paste {
             server: None,
             server_args: vec![],
         },
-        _ => unreachable!(),
     };
 
     let opt = Opt {
-        histfile: matches.value_of("histfile").map(|s| s.to_owned()),
-        config_file: matches.value_of("config").map(|s| s.to_owned()),
+        histfile: matches.get_one::<String>("histfile").map(|s| s.to_owned()),
+        config_file: matches.get_one::<String>("config").map(|s| s.to_owned()),
         op,
     };
 

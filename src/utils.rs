@@ -78,13 +78,12 @@ pub fn override_option_duration_with_option_none(
         if new == "NONE" {
             *old = None;
         } else {
-            *old = Some(
-                humantime::parse_duration(new.as_str()).map_err(|x| clap::Error {
-                    message: format!("DurationError: {}", x),
-                    kind: clap::ErrorKind::InvalidValue,
-                    info: None,
-                })?,
-            )
+            *old = Some(humantime::parse_duration(new.as_str()).map_err(|x| {
+                clap::Error::raw(
+                    clap::error::ErrorKind::InvalidValue,
+                    format!("DurationError: {}", x),
+                )
+            })?)
         }
     }
     Ok(())

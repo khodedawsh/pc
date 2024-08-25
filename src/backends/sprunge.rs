@@ -2,8 +2,8 @@ use std::fmt::{self, Display, Formatter};
 
 use reqwest::blocking::{multipart::Form, Client};
 
+use clap::Parser;
 use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -19,16 +19,15 @@ pub struct Backend {
     pub syntax: Option<String>,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "sprunge backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "sprunge backend")]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
 
     /// Filetype for syntax highlighting
-    #[structopt(short = "s", long = "syntax", value_name = "filetype|NONE")]
+    #[arg(short = 's', long = "syntax", value_name = "filetype|NONE")]
     syntax: Option<String>,
 }
 
@@ -51,8 +50,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args)?;
         override_if_present(&mut self.url, opt.url);
         override_option_with_option_none(&mut self.syntax, opt.syntax);
         Ok(())

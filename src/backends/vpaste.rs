@@ -1,9 +1,9 @@
 use std::fmt::{self, Display, Formatter};
 
+use clap::Parser;
 use reqwest::blocking::{multipart::Form, Client};
 
 use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -18,12 +18,11 @@ pub struct Backend {
     pub url: Url,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "vpaste backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(version, about = "vpaste backend", long_about = None)]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
 }
 
@@ -40,8 +39,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args.iter())?;
         override_if_present(&mut self.url, opt.url);
         Ok(())
     }

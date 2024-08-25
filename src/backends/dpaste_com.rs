@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use reqwest::blocking::{multipart::Form, Client};
 
+use clap::Parser;
 use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -28,24 +28,23 @@ pub struct Backend {
     pub expires: Option<Duration>,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "dpaste_com backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "dpaste_com backend")]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
     /// Filetype for syntax highlighting
-    #[structopt(short = "s", long = "syntax", value_name = "filetype|NONE")]
+    #[arg(short = 's', long = "syntax", value_name = "filetype|NONE")]
     syntax: Option<String>,
     /// Sets a name for the paste author
-    #[structopt(short = "a", long = "author", value_name = "author|NONE")]
+    #[arg(short = 'a', long = "author", value_name = "author|NONE")]
     author: Option<String>,
     /// Title for the paste
-    #[structopt(short = "t", long = "title", value_name = "title|NONE")]
+    #[arg(short = 't', long = "title", value_name = "title|NONE")]
     title: Option<String>,
     /// Time to live as a duration
-    #[structopt(short = "e", long = "expires", value_name = "duration|NONE")]
+    #[arg(short = 'e', long = "expires", value_name = "duration|NONE")]
     expires: Option<String>,
 }
 
@@ -78,8 +77,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args)?;
         override_if_present(&mut self.url, opt.url);
         override_option_with_option_none(&mut self.syntax, opt.syntax);
         override_option_with_option_none(&mut self.author, opt.author);

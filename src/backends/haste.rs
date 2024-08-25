@@ -1,13 +1,12 @@
 use std::fmt::{self, Display, Formatter};
 
-use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
-use url::Url;
-
 use crate::error::PasteResult;
 use crate::types::PasteClient;
 use crate::utils::{override_if_present, serde_url};
+use clap::Parser;
+use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
@@ -17,12 +16,11 @@ pub struct Backend {
     pub url: Url,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "haste backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "haste backend")]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
 }
 
@@ -40,8 +38,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args)?;
         override_if_present(&mut self.url, opt.url);
         Ok(())
     }

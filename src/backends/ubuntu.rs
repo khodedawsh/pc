@@ -1,9 +1,9 @@
 use std::fmt::{self, Display, Formatter};
 
+use clap::Parser;
 use reqwest::blocking::{multipart::Form, Client};
 
 use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -46,21 +46,20 @@ pub struct Backend {
     pub expires: Option<UbuntuExpires>,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "ubuntu backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "ubuntu backend", long_about = None)]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
     /// Filetype for syntax highlighting
-    #[structopt(short = "s", long = "syntax", value_name = "filetype|NONE")]
+    #[arg(short = 's', long = "syntax", value_name = "filetype|NONE")]
     syntax: Option<String>,
     /// Sets a name for the paste author
-    #[structopt(short = "a", long = "author", value_name = "author|NONE")]
+    #[arg(short = 'a', long = "author", value_name = "author|NONE")]
     author: Option<String>,
     /// Time to live as a duration
-    #[structopt(short = "e", long = "expires", value_name = "day|week|month|year|NONE")]
+    #[arg(short = 'e', long = "expires", value_name = "day|week|month|year|NONE")]
     expires: Option<String>,
 }
 
@@ -89,12 +88,12 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args.iter())?;
         override_if_present(&mut self.url, opt.url);
         override_option_with_option_none(&mut self.syntax, opt.syntax);
         override_option_with_option_none(&mut self.author, opt.author);
-        if let Some(ref expires) = opt.expires {
+        if let Some(expires) = opt.expires {
             match expires.as_str() {
                 "NONE" => {
                     self.expires = None;
@@ -112,11 +111,10 @@ impl PasteClient for Backend {
                     self.expires = Some(UbuntuExpires::Year);
                 }
                 e => {
-                    return Err(clap::Error {
-                        message: format!("Invalid value for expires: {}", e),
-                        kind: clap::ErrorKind::InvalidValue,
-                        info: None,
-                    });
+                    return Err(clap::error::Error::raw(
+                        clap::error::ErrorKind::InvalidValue,
+                        format!("Invalid value for expires: {}", e),
+                    ));
                 }
             }
         }

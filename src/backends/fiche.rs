@@ -1,9 +1,8 @@
+use clap::Parser;
+use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Write};
 use std::net::TcpStream;
-
-use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -19,16 +18,15 @@ pub struct Backend {
     pub port: u16,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "fiche backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "fiche backend")]
 pub struct Opt {
     /// Overrides domain set in config
-    #[structopt(short = "d", long = "domain")]
+    #[arg(short = 'd', long = "domain")]
     domain: Option<String>,
 
     /// Overrides port set in config
-    #[structopt(short = "p", long = "port")]
+    #[arg(short = 'p', long = "port")]
     port: Option<u16>,
 }
 
@@ -55,8 +53,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args)?;
         override_if_present(&mut self.domain, opt.domain);
         override_if_present(&mut self.port, opt.port);
         Ok(())

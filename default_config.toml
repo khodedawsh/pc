@@ -2,53 +2,22 @@
 # found.
 
 [main]
-server = "termbin"
+server = "ubuntu"
 
 [servers.vpaste]
 backend = "vpaste"
 url = "http://vpaste.net/"
 
-[servers.rs]
-backend = "paste_rs"
-url = "https://paste.rs/"
-
-[servers.haste]
-backend = "haste"
-url = "https://hastebin.com/"
-
-[servers.termbin]
-backend = "fiche"
-domain = "termbin.com"
-port = 9999
-
-[servers.fedora]
-backend = "modern_paste"
-url = "https://paste.fedoraproject.org/"
-
-[servers.dpastecom]
-backend = "dpaste_com"
-url = "http://dpaste.com/"
-
 [servers.ots]
 backend = "onetimesecret"
 url = "https://onetimesecret.com/"
-
-[servers.sprunge]
-backend = "sprunge"
-url = "http://sprunge.us/"
 
 [servers.pip]
 backend = "pipfi"
 url = "http://p.ip.fi/"
 
-[servers.dpaste]
-backend = "dpaste"
-url = "https://dpaste.de/"
 
 [servers.ubuntu]
 backend = "ubuntu"
 url = "https://paste.ubuntu.com/"
 
-[servers.ix]
-backend = "ix"
-url = "http://ix.io/"

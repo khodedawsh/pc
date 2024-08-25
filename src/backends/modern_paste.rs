@@ -1,9 +1,9 @@
 use std::fmt::{self, Display, Formatter};
 use std::time::{Duration, SystemTime};
 
+use clap::Parser;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
 use url::Url;
 
 use crate::error::PasteResult;
@@ -28,27 +28,26 @@ pub struct Backend {
     pub apikey: Option<String>,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(about = "modern_paste backend")]
-#[structopt(template = "{about}\n\nUSAGE:\n    {usage}\n\n{all-args}")]
+#[derive(Parser)]
+#[command(about = "modern_paste backend")]
 pub struct Opt {
     /// Overrides url set in config
-    #[structopt(short = "u", long = "url")]
+    #[arg(short = 'u', long = "url")]
     url: Option<Url>,
     /// Title for the paste
-    #[structopt(short = "t", long = "title", value_name = "title|NONE")]
+    #[arg(short = 't', long = "title", value_name = "title|NONE")]
     title: Option<String>,
     /// Time to live as a duration
-    #[structopt(short = "e", long = "expires", value_name = "duration|NONE")]
+    #[arg(short = 'e', long = "expires", value_name = "duration|NONE")]
     expires: Option<String>,
     /// Filetype for syntax highlighting
-    #[structopt(short = "s", long = "syntax", value_name = "filetype|NONE")]
+    #[arg(short = 's', long = "syntax", value_name = "filetype|NONE")]
     syntax: Option<String>,
     /// Protects paste access with a password
-    #[structopt(short = "P", long = "password", value_name = "password|NONE")]
+    #[arg(short = 'P', long = "password", value_name = "password|NONE")]
     pub password: Option<String>,
     /// Upload paste as authenticated user
-    #[structopt(short = "k", long = "apikey", value_name = "apikey|NONE")]
+    #[arg(short = 'k', long = "apikey", value_name = "apikey|NONE")]
     pub apikey: Option<String>,
 }
 
@@ -75,8 +74,8 @@ Example config block:
 "#;
 
 impl PasteClient for Backend {
-    fn apply_args(&mut self, args: Vec<String>) -> clap::Result<()> {
-        let opt = Opt::from_iter_safe(args)?;
+    fn apply_args(&mut self, args: Vec<String>) -> Result<(), clap::Error> {
+        let opt = Opt::try_parse_from(args)?;
         override_if_present(&mut self.url, opt.url);
         override_option_with_option_none(&mut self.title, opt.title);
         override_option_with_option_none(&mut self.password, opt.password);
